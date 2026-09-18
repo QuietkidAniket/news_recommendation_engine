@@ -5,8 +5,17 @@ from bson import ObjectId
 from database import database, articles_collection
 from models import Article
 from typing import List
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="News Recommendation Engine API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allows Next.js frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
