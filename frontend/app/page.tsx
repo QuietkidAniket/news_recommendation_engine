@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { TrendingUp, BookOpen, History, Tag } from "lucide-react";
 
 // Replace with Aniket_K's actual ObjectId from MongoDB Compass
-const USER_ID = "aniketkundu2023_db_user"; 
+const USER_ID = "6ab2b4a9b791a3ca88e5a640"; 
 const API_BASE = "http://127.0.0.1:8000";
 
 export default function Dashboard() {
