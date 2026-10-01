@@ -84,6 +84,26 @@ async def delete_article(id: str):
         return {"message": "Article deleted successfully"}
     raise HTTPException(status_code=404, detail="Article not found")
 
+# --- USER CRUD OPERATIONS ---
+
+@app.post("/users/", response_description="Create a new user")
+async def create_user(user: User = Body(...)):
+    user_dict = user.model_dump(by_alias=True, exclude_none=True)
+    new_user = await database.get_collection("Users").insert_one(user_dict)
+    created_user = await database.get_collection("Users").find_one({"_id": new_user.inserted_id})
+    # Stringify ID for the response
+    created_user["_id"] = str(created_user["_id"])
+    return created_user
+
+@app.delete("/users/{id}", response_description="Delete a user")
+async def delete_user(id: str):
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+    delete_result = await database.get_collection("Users").delete_one({"_id": ObjectId(id)})
+    if delete_result.deleted_count == 1:
+        return {"message": "User deleted successfully"}
+    raise HTTPException(status_code=404, detail="User not found")
+
 # --- ADVANCED QUERIES & AGGREGATIONS ---
 
 # 6. AGGREGATION: Get Trending Articles (Sorted by views)
