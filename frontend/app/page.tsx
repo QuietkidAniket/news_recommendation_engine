@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, BookOpen, History, Tag, Trash2, Plus, UserPlus } from "lucide-react";
 
-const API_BASE = "http://127.0.0.1:8000";
+// Change line 6 to this:
+const API_BASE = "http://192.168.0.171:8000";
 
 export default function Dashboard() {
   const [userId, setUserId] = useState("REPLACE_WITH_YOUR_ACTUAL_USER_ID");

@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, Body
 from fastapi.encoders import jsonable_encoder
 from bson import ObjectId
 from database import database, articles_collection
-from models import Article
+from models import Article, User
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -11,7 +11,7 @@ app = FastAPI(title="News Recommendation Engine API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allows Next.js frontend
+    allow_origins=["*"],  # Allow all origins during local development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
