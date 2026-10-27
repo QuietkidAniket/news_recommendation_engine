@@ -26,7 +26,10 @@ Rather than running heavy in-memory filtering or joining algorithms on backend w
 
 * Personalized Recommendations: Uses $match and $in aggregation pipelines to intersect user array preferences with live article metadata tags, sorted by popularity.
 * Global Real-Time Trending: Computes top platform stories utilizing $sort and $limit aggregations indexed over real-time view counts.
-* **Relational Telemetry Tracking ($lookup):** Maintains chronological user reading clickstreams with database-level joins, attaching article metadata without client-side $N+1$ query overheadInteractive Reading Telemetry:y:** One-click "Read" interaction on the client immediately increments article view counters and appends entries to ReadingHistoriesMulti-Key & Compound Indexing:g:** Utilizes targeted indexes on embedded tag arrays, view counts, and relational foreign keys to eliminate full collection scans (COLLSCAN)Dual-View Dashboard:d:** Responsive client featuring an end-user personalized feed ("For You", "Trending", "History") and an Admin Management Console for articles and users.
+* **Relational Telemetry Tracking ($lookup):** Maintains chronological user reading clickstreams with database-level joins, attaching article metadata without client-side $N+1$ query overheadInteractive Reading Telemetry
+* One-click "Read" interaction on the client immediately increments article view counters and appends entries to ReadingHistoriesMulti-Key & Compound Indexing.
+* Utilizes targeted indexes on embedded tag arrays, view counts, and relational foreign keys to eliminate full collection scans (COLLSCAN)Dual-View Dashboard
+* Responsive client featuring an end-user personalized feed ("For You", "Trending", "History") and an Admin Management Console for articles and users.
 
 ---
 
@@ -115,8 +118,13 @@ pip install fastapi uvicorn motor pydantic
 python optimize.py
 
 # Launch the FastAPI ASGI server
-uvicorn main:app --reload --host 127.0.0.1 --port 8000* Interactive API Documentation (Swagger UI): http://127.0.0.1:8000/docs
-* Alternative API Documentation (ReDoc): http://127.0.0.1:8000/redoc
+``` uvicorn main:app --reload --host 127.0.0.1 --port 8000```
+
+* Interactive API Documentation (Swagger UI):
+    ```http://127.0.0.1:8000/docs```
+
+* Alternative API Documentation (ReDoc):
+    ```http://127.0.0.1:8000/redoc```
 
 ---
 
@@ -124,10 +132,10 @@ uvicorn main:app --reload --host 127.0.0.1 --port 8000* Interactive API Document
 
 In a separate terminal:
 
-cd frontend
+``` cd frontend ```
 
 # Install Node dependencies
-npm install
+``` npm install```
 
 # Start Next.js development server
 ```npm run dev``` 
