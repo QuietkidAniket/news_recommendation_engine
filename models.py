@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field, ConfigDict, BeforeValidator
 from typing import List, Optional, Annotated
 from datetime import datetime
 
-# Pydantic V2 method for handling MongoDB ObjectIds
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
 class User(BaseModel):
@@ -19,8 +18,10 @@ class User(BaseModel):
 class Article(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     title: str
+    body: str  # New mandatory content field
     tags: List[str] = []
     views: int = 0
+    authorId: PyObjectId  # Now mandatory to enforce relational integrity
     publishedAt: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(

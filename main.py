@@ -6,6 +6,8 @@ from database import database, articles_collection
 from models import Article, User
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from datetime import datetime
 
 app = FastAPI(title="News Recommendation Engine API")
 
@@ -28,10 +30,9 @@ async def check_db():
         return {"status": "Database connection successful"}
     except Exception as e:
         return {"status": "Database connection failed", "error": str(e)}
-# --- CRUD OPERATIONS ---
-from typing import List
 
-# 1. CREATE
+# --- ARTICLE CRUD OPERATIONS ---
+
 @app.post("/articles/", response_description="Add new article", response_model=Article)
 async def create_article(article: Article = Body(...)):
     article_dict = article.model_dump(by_alias=True, exclude_none=True)
@@ -39,13 +40,11 @@ async def create_article(article: Article = Body(...)):
     created_article = await articles_collection.find_one({"_id": new_article.inserted_id})
     return Article(**created_article)
 
-# 2. READ (All)
 @app.get("/articles/", response_description="List all articles", response_model=List[Article])
 async def list_articles():
     articles = await articles_collection.find().to_list(100)
     return [Article(**art) for art in articles]
 
-# 3. READ (Single)
 @app.get("/articles/{id}", response_description="Get a single article", response_model=Article)
 async def show_article(id: str):
     if not ObjectId.is_valid(id):
@@ -54,7 +53,6 @@ async def show_article(id: str):
         return Article(**article)
     raise HTTPException(status_code=404, detail="Article not found")
 
-# 4. UPDATE (e.g., updating title)
 @app.put("/articles/{id}", response_description="Update an article", response_model=Article)
 async def update_article(id: str, new_title: str = Body(..., embed=True)):
     if not ObjectId.is_valid(id):
@@ -67,13 +65,11 @@ async def update_article(id: str, new_title: str = Body(..., embed=True)):
         updated_article = await articles_collection.find_one({"_id": ObjectId(id)})
         return Article(**updated_article)
     
-    # If no changes were made, just return the existing article
     if (existing_article := await articles_collection.find_one({"_id": ObjectId(id)})) is not None:
         return Article(**existing_article)
         
     raise HTTPException(status_code=404, detail="Article not found")
 
-# 5. DELETE
 @app.delete("/articles/{id}", response_description="Delete an article")
 async def delete_article(id: str):
     if not ObjectId.is_valid(id):
@@ -86,12 +82,19 @@ async def delete_article(id: str):
 
 # --- USER CRUD OPERATIONS ---
 
+# ---> RESTORED GET ENDPOINT FOR USERS <---
+@app.get("/users/", response_description="List all users")
+async def list_users():
+    users = await database.get_collection("Users").find().to_list(100)
+    for user in users:
+        user["_id"] = str(user["_id"])
+    return users
+
 @app.post("/users/", response_description="Create a new user")
 async def create_user(user: User = Body(...)):
     user_dict = user.model_dump(by_alias=True, exclude_none=True)
     new_user = await database.get_collection("Users").insert_one(user_dict)
     created_user = await database.get_collection("Users").find_one({"_id": new_user.inserted_id})
-    # Stringify ID for the response
     created_user["_id"] = str(created_user["_id"])
     return created_user
 
@@ -106,7 +109,6 @@ async def delete_user(id: str):
 
 # --- ADVANCED QUERIES & AGGREGATIONS ---
 
-# 6. AGGREGATION: Get Trending Articles (Sorted by views)
 @app.get("/articles/trending/", response_description="Get top 5 trending articles", response_model=List[Article])
 async def get_trending_articles():
     pipeline = [
@@ -116,7 +118,6 @@ async def get_trending_articles():
     trending = await articles_collection.aggregate(pipeline).to_list(5)
     return [Article(**art) for art in trending]
 
-# 7. AGGREGATION: Get Recommendations for a User (Tag Matching)
 @app.get("/users/{user_id}/recommendations", response_description="Get personalized recommendations", response_model=List[Article])
 async def get_recommendations(user_id: str):
     user = await database.get_collection("Users").find_one({"_id": ObjectId(user_id)})
@@ -133,7 +134,6 @@ async def get_recommendations(user_id: str):
     recommendations = await articles_collection.aggregate(pipeline).to_list(5)
     return [Article(**art) for art in recommendations]
 
-# 8. AGGREGATION: User Reading History with Article Details ($lookup)
 @app.get("/users/{user_id}/history", response_description="Get user reading history with article details")
 async def get_user_history(user_id: str):
     pipeline = [
@@ -149,7 +149,6 @@ async def get_user_history(user_id: str):
     ]
     history = await database.get_collection("ReadingHistories").aggregate(pipeline).to_list(10)
     
-    # Manually stringify raw ObjectIds for JSON serialization on this complex joined query
     for item in history:
         item["_id"] = str(item["_id"])
         item["userId"] = str(item["userId"])
@@ -158,3 +157,23 @@ async def get_user_history(user_id: str):
             item["article_details"]["_id"] = str(item["article_details"]["_id"])
             
     return history
+
+# ---> RESTORED TELEMETRY ENDPOINT <---
+class ReadRequest(BaseModel):
+    user_id: str
+
+@app.post("/articles/{id}/read", response_description="Log article read")
+async def read_article(id: str, payload: ReadRequest):
+    if not ObjectId.is_valid(id) or not ObjectId.is_valid(payload.user_id):
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+        
+    await articles_collection.update_one(
+        {"_id": ObjectId(id)}, {"$inc": {"views": 1}}
+    )
+    
+    await database.get_collection("ReadingHistories").insert_one({
+        "userId": ObjectId(payload.user_id),
+        "articleId": ObjectId(id),
+        "readAt": datetime.utcnow()
+    })
+    return {"message": "Telemetry logged and views incremented"}

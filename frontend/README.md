@@ -1,4 +1,3 @@
-
 <div align="center">
   
   <h1>News Recommendation Engine</h1>
@@ -38,7 +37,7 @@ Rather than running heavy in-memory filtering or joining algorithms on backend w
 
 The following diagram illustrates the strict relational structure maintained within the MongoDB collections via Pydantic V2 validation.
 
-```mermaid
+``` mermaid
 erDiagram
     USER {
         ObjectId _id PK
